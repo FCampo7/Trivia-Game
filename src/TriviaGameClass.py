@@ -122,14 +122,18 @@ class MyMainWindow(QMainWindow):
 	#! Func: Boton Siguiente // Next button
 	def __botonSiguiente_Clicked(self):
 
-		rtrad=copy.deepcopy(self.__responseList[self.__pos])		#* rtrad will contain a copy of the current responseList item translated
-
 		self.__bResultado=False
-
 		self.__botonSiguiente.setDisabled(True)
+
+		rtrad=copy.deepcopy(self.__responseList[self.__pos])		#* rtrad will contain a copy of the current responseList item translated
+		bTranslated=TGAPI.traducir_resultados(rtrad)
 		
-		TGAPI.traducir_resultados(rtrad)
-		
+		if not bTranslated:
+			qdTranslated=QErrorMessage()
+			qdTranslated.setWindowTitle('Información de la Traducción')
+			qdTranslated.showMessage('No se pudo traducir en su totalidad')			#* Message that advice if could translate or not
+			qdTranslated.exec_()
+
 		self.__preguntaN.setText('Pregunta N°{0}: {1}\nQuestion N°{0}: {2}'.format(self.__pos+1, rtrad['question'], self.__responseList[self.__pos]['question']))
 
 		if(rtrad['type']=='múltiple' or rtrad['type']=='multiple'):
@@ -137,10 +141,9 @@ class MyMainWindow(QMainWindow):
 		else:
 			self.__crearGroupBoxB(rtrad)
 
-		self.__groupBox.setLayout(self.__layoutGB)
-
 		self.__pos+=1
 
+		self.__groupBox.setLayout(self.__layoutGB)
 		self.__botonConfirmarRespuesta.setDisabled(False)			#* Habilito el boton Confirmar respuesta // Enable Confirm answer button
 
 
@@ -196,13 +199,13 @@ class MyMainWindow(QMainWindow):
 	def __crearGroupBoxB(self, rtrad):
 		self.__limpiarGB()
 
-		self.__lRB.append(QRadioButton('Cierto'))
+		self.__lRB.append(QRadioButton('Verdadero'))
 		self.__lRB.append(QRadioButton('Falso'))
 
 		self.__layoutGB.addWidget(self.__lRB[0])
 		self.__layoutGB.addWidget(self.__lRB[1])
 
-		if 'Cierto'==rtrad['correct_answer']:
+		if rtrad['correct_answer'] in ['Verdadero', 'Cierto', 'Verdadera', 'True']:
 			self.__opcCorrecta=0
 		else:
 			self.__opcCorrecta=1
