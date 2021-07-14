@@ -1,9 +1,10 @@
 import requests as req
 import html
-import translators as trad
+#import translators as trad
+from translate import Translator
 
 
-lang = 'es-ar' #! This variable has the language to translate, change it to the language you want.
+lang = 'es' #! This variable has the language to translate, change it to the language you want.
 
 
 def apiGet(cantidad: int = 1, categoria: int = 0):
@@ -15,7 +16,7 @@ def apiGet(cantidad: int = 1, categoria: int = 0):
 	* @param categoria: N° de la categoria a elegir 0: todas, [9; 32]: Categorias disponibles // N° of the category chosen 0: any, [9; 32]: available categories
 
 	#### Returns:
-	return (respuesta, resultado)
+	* return (respuesta, resultado)
 
 	En caso exitoso respuesta = 0 y resultado contiene el json con el resultado. // if success: respuesta = 0 and resultado contains the results
 	Si falla respuesta = (1, 2, 3 o 4) y resultado = None // if fail: respuesta = failed response number and resultados = None
@@ -52,16 +53,29 @@ def traducir_resultados(i: dict) -> None:
 	
 	#### Parametros:
 	* @param i: Diccionario con el resultado // Dictionary with the results
+
+	#### Returns:
+	* return _bTranslated: Bool con info si fue traducido o no // Bool with info if it was translated or not
 	"""
 	
+	_bTranslated=True
+
+	trad2=Translator(provider='libre', to_lang=lang, from_lang='en')
+
 	try:
 		for k in i.keys():
 			if k != 'incorrect_answers':
-				i[k] = trad.google(str(i[k]), from_language='en', to_language=lang)
+				i[k]=trad2.translate(str(i[k]))
+				#i[k] = trad.google(str(i[k]), from_language='en', to_language=lang)
 			else:
-				if i['type']!='booleano':
-					i[k][0]=trad.google(str(i[k][0]), from_language='en', to_language=lang)
-					i[k][1]=trad.google(str(i[k][1]), from_language='en', to_language=lang)
-					i[k][2]=trad.google(str(i[k][2]), from_language='en', to_language=lang)
+				if i['type'] not in 'booleano':
+					i[k][0]=trad2.translate(str(i[k][0]))
+					i[k][1]=trad2.translate(str(i[k][1]))
+					i[k][2]=trad2.translate(str(i[k][2]))
+					# i[k][0]=trad.google(str(i[k][0]), from_language='en', to_language=lang)
+					# i[k][1]=trad.google(str(i[k][1]), from_language='en', to_language=lang)
+					# i[k][2]=trad.google(str(i[k][2]), from_language='en', to_language=lang)
 	except:
-		print('No se pudo traducir') #? Says "Couldn't translate"
+		_bTranslated=False
+	finally:
+		return _bTranslated
