@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QIcon
 import src.TriviaGameAPI as TGAPI
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
@@ -13,7 +14,9 @@ def CargarOpcionesMultiples(i: dict, orig: dict):
 	* @param i Diccionario en idioma traducido // Dictionary on translated language
 	* @param orig Diccionario en idioma original // Dictionary on original language
 
-	return (opciones: list, opción correcta: int) // (options: list with the options loaded and shuffled, corr: position of the correct answer)
+	#### Returns:
+
+	* return (opciones: list, opción correcta: int) // (options: list with the options loaded and shuffled, corr: position of the correct answer)
 	"""
 	
 	opciones = [i['correct_answer'] + " - " + orig['correct_answer'], i['incorrect_answers'][0] + " - " + orig['incorrect_answers'][0], i['incorrect_answers'][1] + " - " + orig['incorrect_answers'][1], i['incorrect_answers'][2] + " - " + orig['incorrect_answers'][2]]
@@ -27,21 +30,25 @@ def CargarOpcionesMultiples(i: dict, orig: dict):
 	return opciones, corr
 
 
+#! Class MyMainWindow
 class MyMainWindow(QMainWindow):
 
 	#! Declaración de Widgets // Widgets declaration 
+	__labelCantidadPreguntas=None	#? Label amount of questions
 	__inputCantPreguntas=None		#? Input amount of questions
-	__botonConfirmarCantidad=None	#? Confirm amount and category button
-	__botonSiguiente=None			#? button next
-	__groupBox=None
-	__botonConfirmarRespuesta=None	#? confirm answer button
-	__layoutGB=None					#? layout of the group box
+	__aboutButton=None				#? About button
+	__labelCategoria=None			#? Label categories
 	__comboBoxCategoria=None		#? Category comboBox
+	__botonConfirmarCantidad=None	#? Confirm amount and category button
 	__preguntaN=None				#? Label with the Question
+	__groupBox=None
+	__layoutGB=None					#? layout of the group box
+	__botonConfirmarRespuesta=None	#? confirm answer button
+	__botonSiguiente=None			#? button next
 
 
 	#! Declaración de Variables // Variables declaration
-	__dictCategorias={"Todas": 0, "Conocimiento General": 9, 'Entr.: Libros': 10, 'Entr.: Pelis': 11, 'Entr.: Musica': 12, 'Entr.: Musicales': 13, 'Entr.: Tele': 14, 'Entr.: Video Juegos': 15, 'Entr.: Juegos de mesa': 16, 'Ciencia y nat.': 17, 'Ciencia: Computadoras': 18, 'Ciencia: Matemática': 19, 'Mitología': 20, 'Deportes': 21, 'Geografía': 22, 'Historia': 23, 'Política': 24, 'Arte': 25, 'Celebridades': 26, 'Animales': 27, 'Vehículos': 28, 'Ciencia: Gadgets': 30, 'Entr.: Dibujos y animaciones': 32} #? Dict with the categories, sorry they are in Spanish
+	__dictCategorias={'Todas': 0, 'Conocimiento General': 9, 'Entr.: Libros': 10, 'Entr.: Pelis': 11, 'Entr.: Musica': 12, 'Entr.: Musicales': 13, 'Entr.: Tele': 14, 'Entr.: Video Juegos': 15, 'Entr.: Juegos de mesa': 16, 'Ciencia y nat.': 17, 'Ciencia: Computadoras': 18, 'Ciencia: Matemática': 19, 'Mitología': 20, 'Deportes': 21, 'Geografía': 22, 'Historia': 23, 'Política': 24, 'Arte': 25, 'Celebridades': 26, 'Animales': 27, 'Vehículos': 28, 'Ciencia: Gadgets': 30, 'Entr.: Dibujos y animaciones': 32} #? Dict with the categories, sorry they are in Spanish
 	__pos=None					#? Current position of the responseList
 	__responseNumber=None		#? Response number of the API call
 	__responseList=None			#? A list with the API results
@@ -55,52 +62,74 @@ class MyMainWindow(QMainWindow):
 		super().__init__(parent)
 
 		self.setWindowTitle("Trivia Game")
-		self.setGeometry(300, 200, 600, 370)
+		self.setGeometry(600, 400, 0, 0)
 
 		wid = QWidget(self)
 		self.setCentralWidget(wid)
 		layout = QGridLayout()
 		wid.setLayout(layout)
 
+		#! Init Widgets
+		self.__labelCantidadPreguntas=QLabel('Cantidad de preguntas:')		#? Says "Amount of questions"
 		self.__inputCantPreguntas=QSpinBox()
-		self.__botonConfirmarCantidad=QPushButton('Confirmar')				#? Says "Confirm"
-		self.__botonSiguiente=QPushButton('Siguiente')						#? Says "Next"
-		self.__botonConfirmarRespuesta=QPushButton('Confirmar Respuesta')	#? Says "Confirm Answer"
-		self.__groupBox=QGroupBox()
-		self.__bResultado=False
-		self.__layoutGB = QVBoxLayout()
+		self.__aboutButton=QPushButton(self.style().standardIcon(getattr(QStyle, 'SP_MessageBoxInformation')), '')
+		self.__labelCategoria=QLabel('Categorias:')							#? Says "Categories"
 		self.__comboBoxCategoria=QComboBox()
+		self.__botonConfirmarCantidad=QPushButton('Confirmar')				#? Says "Confirm"
+		self.__groupBox=QGroupBox()
 		self.__preguntaN=QLabel('Pregunta N°:\nQuestion N°:')
+		self.__botonConfirmarRespuesta=QPushButton('Confirmar Respuesta')	#? Says "Confirm Answer"
+		self.__botonSiguiente=QPushButton('Siguiente')						#? Says "Next"
+		self.__layoutGB=QVBoxLayout()
+
+		#! Init vars
+		self.__pos=0
+		self.__bResultado=False
+
+		#! Setting widgets properties
+		self.__inputCantPreguntas.setMaximum(50)
+		self.__inputCantPreguntas.setMinimum(1)
+
+		self.__aboutButton.setMaximumSize(25, 25)
+		self.__aboutButton.setMinimumSize(25, 25)
+		self.__aboutButton.setFlat(True)
+
+		self.__comboBoxCategoria.addItems(self.__dictCategorias.keys())
 
 		self.__preguntaN.setStyleSheet("font-weight: bold;")
-		self.__preguntaN.setFixedHeight(50)
-		self.__preguntaN.adjustSize()
+		self.__preguntaN.setWordWrap(True)
 
-		self.__inputCantPreguntas.enterEvent
+		self.__groupBox.setMinimumHeight(150)
+		self.__groupBox.adjustSize()
 		
 		self.__layoutGB.setAlignment(Qt.AlignHCenter)
 
-		self.__botonSiguiente.setDisabled(True)
-		self.__pos=0
-
-		self.__inputCantPreguntas.setMaximum(50)
-		self.__inputCantPreguntas.setMinimum(1)
-		self.__comboBoxCategoria.addItems(self.__dictCategorias.keys())
-
+		#! Button Connections
+		self.__aboutButton.clicked.connect(self.__aboutButton_Clicked)
 		self.__botonConfirmarCantidad.clicked.connect(self.botonConfirmarCantidad_Clicked)
 		self.__botonSiguiente.clicked.connect(self.__botonSiguiente_Clicked)
 		self.__botonConfirmarRespuesta.clicked.connect(self.__btnConfirmarRespuesta_Clicked)
 
+		self.__botonSiguiente.setDisabled(True)
 		self.__botonConfirmarRespuesta.setDisabled(True)
 
-		layout.addWidget(QLabel("Cantidad de preguntas: "), 0, 0, 1, 1)		#? Says "Number of Questions:"
-		layout.addWidget(self.__inputCantPreguntas, 0, 1, 1, -1)
-		layout.addWidget(self.__comboBoxCategoria, 1, 0, 1, 2)
-		layout.addWidget(self.__botonConfirmarCantidad, 1, 2, 1, -1)
+		#! Adding widgets to layout
+		layout.addWidget(self.__labelCantidadPreguntas, 0, 0, 1, 1)		#? Says "Number of Questions:"
+		layout.addWidget(self.__inputCantPreguntas, 0, 1, 1, 3)
+		layout.addWidget(self.__aboutButton, 0, 4, 1, 1)
+		layout.addWidget(self.__labelCategoria, 1, 0, 1, 1)
+		layout.addWidget(self.__comboBoxCategoria, 1, 1, 1, 2)
+		layout.addWidget(self.__botonConfirmarCantidad, 1, 3, 1, 2)
 		layout.addWidget(self.__preguntaN, 2, 0, 1, -1)
 		layout.addWidget(self.__groupBox, 3, 0, 1, -1)
-		layout.addWidget(self.__botonConfirmarRespuesta, 4, 0, -1, 1)
-		layout.addWidget(self.__botonSiguiente, 4, 2, -1, -1)
+		layout.addWidget(self.__botonConfirmarRespuesta, 4, 0, 1, 1)
+		layout.addWidget(self.__botonSiguiente, 4, 3, 1, 2)
+
+		layout.setRowStretch(2, 0)
+		layout.setRowStretch(3, 1)
+		layout.setColumnStretch(0, 0)
+
+		self.setFixedWidth(500)
 
 
 	#! Func: Boton Confirmar Cantidad // Confirm amount button
@@ -177,6 +206,12 @@ class MyMainWindow(QMainWindow):
 			self.__botonSiguiente.setDisabled(False)
 
 
+	#! Func: Mostrar información // Show information
+	def __aboutButton_Clicked(self):
+		qdAboutWindow=MyAboutWindow(self)
+		qdAboutWindow.show()
+
+
 	#! Func: Limpiar el layout de Group Box // Clean the layout of Group Box
 	def __limpiarGB(self):
 		self.__lRB.clear()
@@ -209,3 +244,45 @@ class MyMainWindow(QMainWindow):
 			self.__opcCorrecta=0
 		else:
 			self.__opcCorrecta=1
+
+
+#! Class AboutWindow
+class MyAboutWindow(QMainWindow):
+	def __init__(self, parent=None) -> None:
+		super().__init__(parent=parent)
+
+		version=1.0
+		gitLabURL="<a href=\"https://gitlab.com/FCampo\">@FCampo</a>"
+
+		self.setWindowTitle('About Trivia Game')
+
+		wid = QWidget(self)
+		self.setCentralWidget(wid)
+		layout=QGridLayout()
+		wid.setLayout(layout)
+
+		labelVersion=QLabel("version: v" + str(version))
+		labelName=QLabel("By Francisco L. Campo")
+		labelGitLab=QLabel("GitLab: " + gitLabURL)
+		exitButton=QPushButton('Cerrar')
+
+		labelGitLab.setOpenExternalLinks(True)
+
+		labelName.setDisabled(True)
+
+		exitButton.clicked.connect(self.__exitButton_Clicked)
+
+		layout.addWidget(labelVersion, 0, 0, 1, -1)
+		layout.addWidget(labelGitLab, 1, 0, 1, -1)
+		layout.addWidget(labelName, 2, 0, 1, 1)
+		layout.addWidget(exitButton, 2, 5, 1, -1)
+
+		layout.setRowStretch(0, 0)
+		layout.setRowStretch(1, 0)
+		layout.setRowStretch(2, 0)
+
+		self.adjustSize()
+		self.setFixedSize(self.size())
+
+	def __exitButton_Clicked(self):
+		self.hide()

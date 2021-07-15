@@ -28,7 +28,7 @@ def apiGet(cantidad: int = 1, categoria: int = 0):
 
 	r = req.get(apiURL).json()
 
-	#? Decodifico la pregunta y respuestas // Decode de question and answers
+	#? Decodifico la pregunta y respuestas // Decode question and answers
 	for i in r['results']:
 		i['question']=html.unescape(i['question'])
 		if i['type']=='multiple':
@@ -55,7 +55,7 @@ def traducir_resultados(i: dict) -> None:
 	* @param i: Diccionario con el resultado // Dictionary with the results
 
 	#### Returns:
-	* return _bTranslated: Bool con info si fue traducido o no // Bool with info if it was translated or not
+	* return _bTranslated: True: si fue traducido, False: si no // True: if it was translated, False: if not
 	"""
 	
 	_bTranslated=True
